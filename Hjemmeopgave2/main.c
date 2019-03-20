@@ -1,5 +1,5 @@
 /*
-Afleveringsopgave 2
+Afleveringsopgave 3
 02318 - C Programmering
 
 Gruppe 32
@@ -23,11 +23,21 @@ s184750
 #include <limits.h>
 
 
-//defines the limits of the array
-#define ROWS 50
-#define COLS 5
+//define struct TA
+typedef struct Student
+{
+	char name[50];
+	char instituteName[50];
 
-void worstBestTA(int array[ROWS][COLS], int counter)
+	int instituteNr;
+	int studentNr;
+	int workHours;
+	int sickLeave;
+	int taCourse;
+} TA;
+
+
+void worstBestTA(int array[], int counter)
 {
 	int bestSum = 0;
 	int worstSum = INT_MAX;
@@ -69,7 +79,7 @@ void worstBestTA(int array[ROWS][COLS], int counter)
 
 }
 
-void printInstituteData(int array[ROWS][COLS], int counter)
+void printInstituteData(int array[], int counter)
 {
 	//select institute
 	system("cls");
@@ -96,7 +106,7 @@ void printInstituteData(int array[ROWS][COLS], int counter)
 	printf("Total TA Hours: %d \n", sumTimer);
 }
 
-void printAllData(int array[ROWS][COLS], int counter)
+void printAllData(int array[], int counter)
 {
 	system("cls");
 	//prints all the data in the studentDataArray up til "counter"
@@ -109,7 +119,7 @@ void printAllData(int array[ROWS][COLS], int counter)
 
 }
 
-void printSingleTA(int array[ROWS][COLS])
+void printSingleTA(int array[])
 {
 	//ask the user so select a student
 	system("cls");
@@ -125,7 +135,7 @@ void printSingleTA(int array[ROWS][COLS])
 
 }
 
-void addTA(int array[ROWS][COLS], int counter)
+void addTA(int array[], int counter)
 {
 	//helper array, lets me print in a loop
 	char texts[5][20] = { "studentnumber","institute","workHours","sickLeave","TACourse" };
@@ -169,8 +179,8 @@ void enterContinue()
 void menu()
 {
 	bool isActive = true;
-	//2d array for the data, sized for 50 students, and 6 datapoints
-	int studentDataArray[ROWS][COLS];
+	//data array full of "struct Student"
+	TA studentDataArray[4];
 	//counts up what numer of students we have added.
 	int counter = 0;
 
@@ -200,11 +210,13 @@ void menu()
 			//output the result to user
 			system("cls");
 			printf("added new TA:\n");
-			printf("studentnumber: %d \n", studentDataArray[counter][0]);
-			printf("institute    : %d \n", studentDataArray[counter][1]);
-			printf("work hours   : %d \n", studentDataArray[counter][2]);
-			printf("sick leave   : %d \n", studentDataArray[counter][3]);
-			printf("TA course    : %d \n", studentDataArray[counter][4]);
+			printf("student name : %d \n", studentDataArray[counter].name);
+			printf("studentnumber: %d \n", studentDataArray[counter].studentNr);
+			printf("institute    : %d \n", studentDataArray[counter].instituteName);
+			printf("institute nr : %d \n", studentDataArray[counter].instituteNr);
+			printf("work hours   : %d \n", studentDataArray[counter].workHours);
+			printf("sick leave   : %d \n", studentDataArray[counter].sickLeave);
+			printf("TA course    : %d \n", studentDataArray[counter].taCourse);
 
 
 			//break the flow to alow the user to see the data added
