@@ -37,7 +37,7 @@ typedef struct Student
 } TA;
 
 
-void worstBestTA(int array[], int counter)
+void worstBestTA(TA array[], int counter)
 {
 	int bestSum = 0;
 	int worstSum = INT_MAX;
@@ -45,7 +45,7 @@ void worstBestTA(int array[], int counter)
 	//find the best and worst totals.
 	for (int i = 0; i < counter; i++)
 	{
-		int j = array[i][2] - array[i][3];
+		int j = array[i].workHours - array[i].sickLeave;
 		if (j > bestSum)
 			bestSum = j; //update best sum
 
@@ -175,6 +175,25 @@ void enterContinue()
 	getchar();
 }
 
+//print funktion, recieves the data array + a list of the TA's to print.
+void printDataInList(int toPrint[], TA array[])
+{
+	printf("%-10s%-18s%-15s%-15s%-15s%-15s%-15s%-15s\n", "Index", "Studentnumber","Name", "Institute", "Inst. Nr", "Work Hours", "Sick Leave", "TA Course");
+	printf("---------------------------------------------------------------------------------\n");
+	for (int j = 0; j < (sizeof(toPrint)/sizeof(toPrint[0])); j++)
+	{
+		int i = toPrint[j];
+
+		printf("%-10d%-18d%-15s%-15s%-15d%-15d%-15d%-15d\n", i, array[i].studentNr, array[i].name, array[i].instituteName, array[i].instituteNr, 
+																array[i].workHours, array[i].sickLeave, array[i].taCourse);
+	}
+}
+
+void doubleArraySize(TA array[])
+{
+
+}
+
 //main menu
 void menu()
 {
@@ -183,7 +202,6 @@ void menu()
 	TA studentDataArray[4];
 	//counts up what numer of students we have added.
 	int counter = 0;
-
 
 	//shows the menu first time
 	showMenuText();
