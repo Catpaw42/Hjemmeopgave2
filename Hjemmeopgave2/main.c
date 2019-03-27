@@ -104,8 +104,23 @@ void worstBestTA(TA array[], int counter)
 
 }
 
-void printInstituteData(int array[], int counter)
+//given institute nr or name, prints all attached TA's for that institute and a total billable hours.
+//TODO: make tis work by name aswell
+void printInstituteData(TA array[], int counter)
 {
+	//manually allocate a new array, limit by counter so we can store ALL the TA's if needed
+	TA *toPrint;
+	toPrint = malloc(counter * sizeof(TA));
+	if (toPrint == NULL)
+	{
+		printf("Error!! Malloc of toPrint failed.");
+		exit(1);
+	}
+	int toPrintCounter = 0;
+	int sumTimer = 0;
+
+
+	//TODO: print a list of the institutes here, by name.
 	//select institute
 	system("cls");
 	printf(">>select institute\n<<");
@@ -114,21 +129,23 @@ void printInstituteData(int array[], int counter)
 	int i = 0;
 	sscanf(inputChar, "%d", &i);
 
-
-	int sumTimer = 0;
 	//loop all students, check if they belong to the selected institute, and add to sum. 
-	printf("%-10s%-18s%-15s%-15s%-15s%-15s\n", "index", "studentnumber", "institute", "work hours", "sick leave", "TA Course");
-	printf("---------------------------------------------------------------------------------\n");
 	for (int j = 0; j < counter; j++)
 	{
-		if (array[j][1] == i)
+		if (array[j].instituteNr == i)
 		{
-			sumTimer = sumTimer + array[j][2] - array[j][3];
-			printf("%-10d%-18d%-15d%-15d%-15d%-15d\n", j, array[j][0], array[j][1], array[j][2], array[j][3], array[j][4]);
+			sumTimer = sumTimer + array[j].workHours - array[j].sickLeave;
+			toPrint[toPrintCounter] = array[j];
+			toPrintCounter++;
 		}
 	}
 	printf("\n");
 	printf("Total TA Hours: %d \n", sumTimer);
+
+	printDataInList(toPrint, toPrintCounter);
+
+	//free the malloc
+	free(toPrint);
 }
 
 //prints all data in the main data array
@@ -138,27 +155,30 @@ void printAllData(int array[], int counter)
 	printDataInList(array, counter);
 }
 
-
-void printSingleTA(int array[])
+//asks for input for a single student, then prints that students info
+void printSingleTA(TA array[])
 {
-	//ask the user so select a student
+	//ask the user to select a student 
+	//TODO: make this work with studentnr, and maybe name.
 	system("cls");
 	printf(">>select student<<\n");
 	char inputChar[256];
 	fgets(inputChar, 256, stdin);
 	int i = 0;
 	sscanf(inputChar, "%d", &i);
+
+	TA singleStudent[1];
+	singleStudent[0] = array[i];
+
 	//prinst data for the selected student
-	printf("%-10s%-18s%-15s%-15s%-15s%-15s\n", "index", "studentnumber", "institute", "work hours", "sick leave", "TA Course");
-	printf("---------------------------------------------------------------------------------\n");
-	printf("%-10d%-18d%-15d%-15d%-15d%-15d\n", i, array[i][0], array[i][1], array[i][2], array[i][3], array[i][4]);
+	printDataInList(singleStudent, 1);
 
 }
 
-void addTA(int array[], int counter)
+void addTA(TA array[], int counter)
 {
-	//helper array, lets me print in a loop
-	char texts[5][20] = { "studentnumber","institute","workHours","sickLeave","TACourse" };
+	//helper array, lets me print in a loop TODO: Extend, automated input of institute name
+	char texts[5][20] = { "studentnumber","institute","workHours","sickLeave","TACourse"};
 	system("cls");
 	printf("\n********************************************************\n");
 	printf("**Add new TA**\n\n");
