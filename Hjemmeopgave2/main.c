@@ -12,9 +12,6 @@ s184750
 */
 
 
-
-
-
 //standard indput and output
 #include <stdio.h>
 //includes boolean type
@@ -42,6 +39,28 @@ void worstBestTA(TA array[], int counter)
 	int bestSum = 0;
 	int worstSum = INT_MAX;
 
+
+	//manually allocate a new array for Best TA, limit by counter so we can store ALL the TA's if needed
+	TA *bestTA;
+	bestTA = malloc(counter * sizeof(TA));
+	if (bestTA == NULL)
+	{
+		printf("Error!! Malloc of BestTA failed.");
+		exit(1);
+	}
+	int bestTACounter = 0;
+
+	//manually allocate a new array for Worst TA, limit by counter so we can store ALL the TA's if needed
+	TA *worstTA;
+	worstTA = malloc(counter * sizeof(TA));
+	if (worstTA == NULL)
+	{
+		printf("Error!! Malloc of worstTA failed.");
+		exit(1);
+	}
+	int worstTACounter = 0;
+
+
 	//find the best and worst totals.
 	for (int i = 0; i < counter; i++)
 	{
@@ -52,30 +71,36 @@ void worstBestTA(TA array[], int counter)
 		if (j < worstSum)
 			worstSum = j; //update worst sum			
 	}
-	// clear previous menu
-	system("cls");
-	//find the students that those sums apply to
-	printf(">>Best TA, totaling : %d work hours<<\n\n", bestSum);
-	printf("%-10s%-18s%-15s%-15s%-15s%-15s\n", "index", "studentnumber", "institute", "work hours", "sick leave", "TA Course");
-	printf("---------------------------------------------------------------------------------\n");
+
+
+	//find the students that BestSum applies to, and store them in a separate array
 	for (int j = 0; j < counter; j++)
-	{
-		if ((array[j][2] - array[j][3]) == bestSum)
+		if ((array[j].workHours - array[j].sickLeave) == bestSum)
 		{
-			printf("%-10d%-18d%-15d%-15d%-15d%-15d\n", j, array[j][0], array[j][1], array[j][2], array[j][3], array[j][4]);
+			bestTA[bestTACounter] = array[j];
+			bestTACounter++;
 		}
-	}
+
+	//find the students that worstSum applies to, and store them in a separate array
+	for (int j = 0; j < counter; j++)
+		if ((array[j].workHours - array[j].sickLeave) == worstSum)
+		{
+			worstTA[worstTACounter] = array[j];
+			worstTACounter++;
+		}
+
+	//use PrintDataInList to print the results
+	printf(">>Best TA, totaling : %d work hours<<\n\n", bestSum);
+	printDataInList(bestTA, bestTACounter);
+
 	printf("\n\n\n");
 	printf(">>Worst TA, totaling : %d work hours\n\n", worstSum);
-	printf("%-10s%-18s%-15s%-15s%-15s%-15s\n", "index", "studentnumber", "institute", "work hours", "sick leave", "TA Course");
-	printf("---------------------------------------------------------------------------------\n");
-	for (int j = 0; j < counter; j++)
-	{
-		if ((array[j][2] - array[j][3]) == worstSum)
-		{
-			printf("%-10d%-18d%-15d%-15d%-15d%-15d\n", j, array[j][0], array[j][1], array[j][2], array[j][3], array[j][4]);
-		}
-	}
+	printDataInList(worstTA, worstTACounter);
+
+	
+	//free the malloc
+	free(bestTA);
+	free(worstTA);
 
 }
 
@@ -106,18 +131,13 @@ void printInstituteData(int array[], int counter)
 	printf("Total TA Hours: %d \n", sumTimer);
 }
 
+//prints all data in the main data array
 void printAllData(int array[], int counter)
 {
-	system("cls");
-	//prints all the data in the studentDataArray up til "counter"
-	printf("%-10s%-18s%-15s%-15s%-15s%-15s\n", "index", "studentnumber", "institute", "work hours", "sick leave", "TA Course");
-	printf("---------------------------------------------------------------------------------\n");
-	for (int i = 0; i < counter; i++)
-	{
-		printf("%-10d%-18d%-15d%-15d%-15d%-15d\n", i, array[i][0], array[i][1], array[i][2], array[i][3], array[i][4]);
-	}
-
+	//as printDataInList prints all the TA's we give it, all we need to do is give it all  the data. 
+	printDataInList(array, counter);
 }
+
 
 void printSingleTA(int array[])
 {
@@ -176,14 +196,14 @@ void enterContinue()
 }
 
 //print funktion, recieves the data array + a list of the TA's to print.
-void printDataInList(int toPrint[], TA array[])
+void printDataInList(TA array[], int listSize)
 {
+	//prints the headder for the data
 	printf("%-10s%-18s%-15s%-15s%-15s%-15s%-15s%-15s\n", "Index", "Studentnumber","Name", "Institute", "Inst. Nr", "Work Hours", "Sick Leave", "TA Course");
 	printf("---------------------------------------------------------------------------------\n");
-	for (int j = 0; j < (sizeof(toPrint)/sizeof(toPrint[0])); j++)
+	for (int i = 0; i < listSize; i++)
 	{
-		int i = toPrint[j];
-
+		//prints each TA in list form, with all data
 		printf("%-10d%-18d%-15s%-15s%-15d%-15d%-15d%-15d\n", i, array[i].studentNr, array[i].name, array[i].instituteName, array[i].instituteNr, 
 																array[i].workHours, array[i].sickLeave, array[i].taCourse);
 	}
