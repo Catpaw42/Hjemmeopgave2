@@ -20,11 +20,13 @@ s184750
 #include <limits.h>
 
 
-//define struct TA
+#define MAX_INPUT_LENGTH 256
+
+//define struct TA, this is a datastucture that holds all the about a single TA.
 typedef struct Student
 {
-	char name[50];
-	char instituteName[50];
+	char name[MAX_INPUT_LENGTH];
+	char instituteName[MAX_INPUT_LENGTH];
 
 	int instituteNr;
 	int studentNr;
@@ -33,6 +35,106 @@ typedef struct Student
 	int taCourse;
 } TA;
 
+//used to clearly show what data we're receiving from the user
+typedef enum inputType 
+{
+	INTEGER, STRING, STUDENTNR
+
+} inputType;
+
+
+//custon input function, to validate user input.
+//takes an array to store the data in, the length of that array, and the type of data to validate for.
+//returns NULL if input fails to validate, and TRUE if it does.
+bool getUserInput(char resultArray[], int arrayLenght, inputType x)
+{
+	//temporary string buffer.
+	char inputChar[MAX_INPUT_LENGTH];
+
+
+	//generic error check, fgets returns a NULL pointer on error so if fgets does'nt validate we have a problem
+	if (!fgets(inputChar, sizeof inputChar, stdin))
+	{
+		printf("Read error, feel free to panic");
+		exit(-1);
+	}
+	//check if we have an end of file char, if not, then the user input is to long for the buffer.
+	if (!strchr(inputChar, '\n'))
+	{
+		//empty the rest of the buffer
+		while (fgets(inputChar, sizeof inputChar, stdin));
+		printf("Error input is to long,  (input > %d)", MAX_INPUT_LENGTH);
+		//return 0 as the input is not valid
+		return false;
+	}
+
+
+	//check if the string is an integer
+	if (x = INTEGER || STUDENTNR)
+	{
+		//pointer (char) used to hold the next value after a sucessfull conversion
+		char *check;
+		//attempt to convert the string to a long and thento an integer, strtol -> int
+		int tmp = (int)strtol(inputChar, &check, 10);
+
+		//check the value of the check variable, if it's a whitespace or a 0, then we sucesfully converted the entire string.
+		if (!(isspace(*check) || *check == 0))
+		{
+			printf("Error input is not an integer");
+			return false;
+		}
+			
+	}
+	//special case for studentnr.
+	if (x = STUDENTNR)
+	{
+		//check length = 6
+		int temp = (int)strtol(inputChar, NULL, 10);
+		if (temp < 100000 || temp > 999999)
+		{
+			printf("Error Student nr is to long");
+			return false;
+		}
+	}
+
+
+
+
+
+
+
+	//default state, the input is a string.
+	//we have now passed all relevant checks, we copy the data to the output array and return true
+	strcpy(resultArray, inputChar);
+	return true;
+}
+
+//test method, adds data to the array TODO: comment out when done!!
+int addTestData(TA array[])
+{
+	//add nine TA's
+	for (int i = 0; i < 9; i++)
+	{
+		TA temp; //temporary stuct
+
+		temp.studentNr = 123456 + (10 * i);				//studentnr.
+		strcpy(temp.name, "testStudent");				//name
+		temp.instituteNr = i % 3;						//institutenr.
+		if(i % 3 == 0 )
+			strcpy(temp.instituteName, "institute 1");	//institute name
+		else if (i % 3 == 1)
+			strcpy(temp.instituteName, "institute 2");
+		else if (i % 3 == 2)
+			strcpy(temp.instituteName, "institute 3");
+		temp.workHours = 100 - (i * 2);					//work Hours
+		temp.sickLeave = 5 + i;							//sick Leave
+		temp.taCourse = i % 2;							//TA Course
+
+		array[i] = temp; //add the new TA to the array
+	}	
+	//return 9, to be used as the counter
+	return 9;
+}
 
 void worstBestTA(TA array[], int counter)
 {
@@ -105,7 +207,7 @@ void worstBestTA(TA array[], int counter)
 }
 
 //given institute nr or name, prints all attached TA's for that institute and a total billable hours.
-//TODO: make tis work by name aswell
+//TODO: make this work by name aswell
 void printInstituteData(TA array[], int counter)
 {
 	//manually allocate a new array, limit by counter so we can store ALL the TA's if needed
@@ -124,8 +226,8 @@ void printInstituteData(TA array[], int counter)
 	//select institute
 	system("cls");
 	printf(">>select institute\n<<");
-	char inputChar[256];
-	fgets(inputChar, 256, stdin);
+	char inputChar[MAX_INPUT_LENGTH];
+	getUserInput(inputChar, MAX_INPUT_LENGTH, INTEGER);
 	int i = 0;
 	sscanf(inputChar, "%d", &i);
 
@@ -149,9 +251,9 @@ void printInstituteData(TA array[], int counter)
 }
 
 //prints all data in the main data array
-void printAllData(int array[], int counter)
+void printAllData(TA array[], int counter)
 {
-	//as printDataInList prints all the TA's we give it, all we need to do is give it all  the data. 
+	//as printDataInList prints all the TA's we give it, all we need to do is give it all the data. 
 	printDataInList(array, counter);
 }
 
@@ -162,11 +264,13 @@ void printSingleTA(TA array[])
 	//TODO: make this work with studentnr, and maybe name.
 	system("cls");
 	printf(">>select student<<\n");
-	char inputChar[256];
-	fgets(inputChar, 256, stdin);
+	char inputChar[MAX_INPUT_LENGTH];
+	getUserInput(inputChar, MAX_INPUT_LENGTH, STUDENTNR);
 	int i = 0;
 	sscanf(inputChar, "%d", &i);
 
+	//create array for the single student, no malloc here as we know at
+	//compile-time how long an array for one student should be
 	TA singleStudent[1];
 	singleStudent[0] = array[i];
 
@@ -175,22 +279,23 @@ void printSingleTA(TA array[])
 
 }
 
+//add a single student to the data array.
 void addTA(TA array[], int counter)
 {
 	//helper array, lets me print in a loop TODO: Extend, automated input of institute name
-	char texts[5][20] = { "studentnumber","institute","workHours","sickLeave","TACourse"};
+	char texts[7][20] = {"Name", "studentnumber", "institute", "institute NR", "workHours", "sickLeave", "TACourse"};
 	system("cls");
 	printf("\n********************************************************\n");
 	printf("**Add new TA**\n\n");
 
-	for (int i = 0; i < COLS; i++)
+	for (int i = 0; i < 7; i++)
 	{
 		//gets input from user
 		printf("Input %s :", texts[i]);
 		char inputChar[256];
-		fgets(inputChar, 256, stdin);
+		getUserInput(inputChar, MAX_INPUT_LENGTH, STRING);
 		//casts input to integer, and store in the data array
-		sscanf(inputChar, "%d", &array[counter][i]);
+		sscanf(inputChar, "%d", &array[counter].);
 	}
 }
 
@@ -251,8 +356,8 @@ void menu()
 	{
 
 		//gets exactly 255 characters from the input "stdin", saves the last space in the aray for newline.
-		char inputChar[256];
-		fgets(inputChar, 256, stdin);
+		char inputChar[MAX_INPUT_LENGTH];
+		getUserInput(inputChar, MAX_INPUT_LENGTH, INTEGER);
 
 		showMenuText();
 		printf("\n");
