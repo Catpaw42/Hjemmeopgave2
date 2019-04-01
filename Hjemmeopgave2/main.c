@@ -22,13 +22,18 @@ s184750
 
 #define MAX_INPUT_LENGTH 256
 
+
+//Structure to represent the institutes
+typedef struct Institute
+{
+	char name[MAX_INPUT_LENGTH];
+	int number;
+}INSTITUTE;
 //define struct TA, this is a datastucture that holds all the about a single TA.
 typedef struct Student
 {
 	char name[MAX_INPUT_LENGTH];
-	char instituteName[MAX_INPUT_LENGTH];
-
-	int instituteNr;
+	INSTITUTE institute;
 	int studentNr;
 	int workHours;
 	int sickLeave;
@@ -45,7 +50,7 @@ typedef enum inputType
 
 //custon input function, to validate user input.
 //takes an array to store the data in, the length of that array, and the type of data to validate for.
-//returns NULL if input fails to validate, and TRUE if it does.
+//returns FALSE if input fails to validate, and TRUE if it does.
 bool getUserInput(char resultArray[], int arrayLenght, inputType x)
 {
 	//temporary string buffer.
@@ -119,13 +124,13 @@ int addTestData(TA array[])
 
 		temp.studentNr = 123456 + (10 * i);				//studentnr.
 		strcpy(temp.name, "testStudent");				//name
-		temp.instituteNr = i % 3;						//institutenr.
+		temp.institute.number = i % 3;						//institutenr.
 		if(i % 3 == 0 )
-			strcpy(temp.instituteName, "institute 1");	//institute name
+			strcpy(temp.institute.name, "institute 1");	//institute name
 		else if (i % 3 == 1)
-			strcpy(temp.instituteName, "institute 2");
+			strcpy(temp.institute.name, "institute 2");
 		else if (i % 3 == 2)
-			strcpy(temp.instituteName, "institute 3");
+			strcpy(temp.institute.name, "institute 3");
 		temp.workHours = 100 - (i * 2);					//work Hours
 		temp.sickLeave = 5 + i;							//sick Leave
 		temp.taCourse = i % 2;							//TA Course
@@ -234,7 +239,7 @@ void printInstituteData(TA array[], int counter)
 	//loop all students, check if they belong to the selected institute, and add to sum. 
 	for (int j = 0; j < counter; j++)
 	{
-		if (array[j].instituteNr == i)
+		if (array[j].institute.number == i)
 		{
 			sumTimer = sumTimer + array[j].workHours - array[j].sickLeave;
 			toPrint[toPrintCounter] = array[j];
@@ -283,19 +288,106 @@ void printSingleTA(TA array[])
 void addTA(TA array[], int counter)
 {
 	//helper array, lets me print in a loop TODO: Extend, automated input of institute name
-	char texts[7][20] = {"Name", "studentnumber", "institute", "institute NR", "workHours", "sickLeave", "TACourse"};
 	system("cls");
 	printf("\n********************************************************\n");
 	printf("**Add new TA**\n\n");
 
+	TA temp; //temporary TA to store input data
+
 	for (int i = 0; i < 7; i++)
 	{
-		//gets input from user
-		printf("Input %s :", texts[i]);
 		char inputChar[256];
-		getUserInput(inputChar, MAX_INPUT_LENGTH, STRING);
-		//casts input to integer, and store in the data array
-		sscanf(inputChar, "%d", &array[counter].);
+		if (i = 0)
+		{
+			printf("Input Name :");
+			if (getUserInput(inputChar, MAX_INPUT_LENGTH, STRING)) //correct input
+			{
+				strcpy(temp.name, inputChar);
+			}
+			else //invalid input
+			{
+				//reduce i by one, this forces the loop to ask for the same input again
+				i--;
+				printf("Invalid Input \n");
+			}
+		}
+		else if (i = 1)
+		{
+			printf("Input Student Nr :");
+			if (getUserInput(inputChar, MAX_INPUT_LENGTH, STUDENTNR)) //correct input
+			{
+				//casts input to integer, and store in the data array
+				sscanf(inputChar, "%d", &temp.studentNr);
+			}
+			else //invalid input
+			{
+				//reduce i by one, this forces the loop to ask for the same input again
+				i--;
+				printf("Invalid Input, must be six digits the format: XXXXXX \n");
+			}
+		}
+		else if (i = 2)
+		{
+			printf("Input Institute Nr :");
+			if (getUserInput(inputChar, MAX_INPUT_LENGTH, INTEGER)) //correct input
+			{
+				//casts input to integer, and store in the data array
+				sscanf(inputChar, "%d", &temp.institute.number);
+			}
+			else //invalid input
+			{
+				//reduce i by one, this forces the loop to ask for the same input again
+				i--;
+				printf("Invalid Input, must be integer \n");
+			}
+		}
+		else if (i = 3)
+		{
+			printf("Input Work Hours :");
+			if (getUserInput(inputChar, MAX_INPUT_LENGTH, INTEGER)) //correct input
+			{
+
+			}
+			else //invalid input
+			{
+				//reduce i by one, this forces the loop to ask for the same input again
+				i--;
+				printf("Invalid Input, must be integer \n");
+			}
+		}
+		else if (i = 4)
+		{
+			printf("Input Sick Leave :");
+			if (getUserInput(inputChar, MAX_INPUT_LENGTH, INTEGER)) //correct input
+			{
+
+			}
+			else //invalid input
+			{
+				//reduce i by one, this forces the loop to ask for the same input again
+				i--;
+				printf("Invalid Input, must be integer \n");
+			}
+		}
+		else if (i = 5)
+		{
+			printf("Input TA course 1=yes, 2 = no :");
+			if (getUserInput(inputChar, MAX_INPUT_LENGTH, INTEGER)) //correct input
+			{
+
+			}
+			else //invalid input
+			{
+				//reduce i by one, this forces the loop to ask for the same input again
+				i--;
+				printf("Invalid Input, must be integer \n");
+			}
+		}
+		
+
+
+		//assign the inputted values to the array
+		array[counter] = temp;
 	}
 }
 
@@ -329,7 +421,7 @@ void printDataInList(TA array[], int listSize)
 	for (int i = 0; i < listSize; i++)
 	{
 		//prints each TA in list form, with all data
-		printf("%-10d%-18d%-15s%-15s%-15d%-15d%-15d%-15d\n", i, array[i].studentNr, array[i].name, array[i].instituteName, array[i].instituteNr, 
+		printf("%-10d%-18d%-15s%-15s%-15d%-15d%-15d%-15d\n", i, array[i].studentNr, array[i].name, array[i].institute.name, array[i].institute.number,
 																array[i].workHours, array[i].sickLeave, array[i].taCourse);
 	}
 }
@@ -375,8 +467,8 @@ void menu()
 			printf("added new TA:\n");
 			printf("student name : %d \n", studentDataArray[counter].name);
 			printf("studentnumber: %d \n", studentDataArray[counter].studentNr);
-			printf("institute    : %d \n", studentDataArray[counter].instituteName);
-			printf("institute nr : %d \n", studentDataArray[counter].instituteNr);
+			printf("institute    : %d \n", studentDataArray[counter].institute.name);
+			printf("institute nr : %d \n", studentDataArray[counter].institute.number);
 			printf("work hours   : %d \n", studentDataArray[counter].workHours);
 			printf("sick leave   : %d \n", studentDataArray[counter].sickLeave);
 			printf("TA course    : %d \n", studentDataArray[counter].taCourse);
