@@ -19,6 +19,11 @@ s184750
 //include limits constants
 #include <limits.h>
 
+//contains functions i use to verify user input
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+
 
 #define MAX_INPUT_LENGTH 256
 
@@ -29,7 +34,8 @@ typedef struct Institute
 	char name[MAX_INPUT_LENGTH];
 	int number;
 }INSTITUTE;
-//define struct TA, this is a datastucture that holds all the about a single TA.
+
+//define struct TA, this is a datastucture that holds all data about a single TA.
 typedef struct Student
 {
 	char name[MAX_INPUT_LENGTH];
@@ -43,15 +49,15 @@ typedef struct Student
 //used to clearly show what data we're receiving from the user
 typedef enum inputType 
 {
-	INTEGER, STRING, STUDENTNR
+	INTEGER, STRING, STUDENTNR, INSTITUTENR
 
 } inputType;
 
 
 //custon input function, to validate user input.
-//takes an array to store the data in, the length of that array, and the type of data to validate for.
+//takes an array to store the return data in, and the type of data to validate for.
 //returns FALSE if input fails to validate, and TRUE if it does.
-bool getUserInput(char resultArray[], int arrayLenght, inputType x)
+bool getUserInput(char resultArray[], inputType x)
 {
 	//temporary string buffer.
 	char inputChar[MAX_INPUT_LENGTH];
@@ -75,7 +81,7 @@ bool getUserInput(char resultArray[], int arrayLenght, inputType x)
 
 
 	//check if the string is an integer
-	if (x = INTEGER || STUDENTNR)
+	if (x == INTEGER || x== STUDENTNR || x == INSTITUTENR)
 	{
 		//pointer (char) used to hold the next value after a sucessfull conversion
 		char *check;
@@ -91,7 +97,7 @@ bool getUserInput(char resultArray[], int arrayLenght, inputType x)
 			
 	}
 	//special case for studentnr.
-	if (x = STUDENTNR)
+	if (x == STUDENTNR)
 	{
 		//check length = 6
 		int temp = (int)strtol(inputChar, NULL, 10);
@@ -101,21 +107,26 @@ bool getUserInput(char resultArray[], int arrayLenght, inputType x)
 			return false;
 		}
 	}
+	//special case for Institute nr.
+	if (x == INSTITUTENR)
+	{
+		//check between 1 and 25
+		int temp = (int)strtol(inputChar, NULL, 10);
+		if (temp < 1 || temp > 25)
+		{
+			printf("Error Student nr is to long");
+			return false;
+		}
+	}
 
 
-
-
-
-
-
-	//default state, the input is a string.
 	//we have now passed all relevant checks, we copy the data to the output array and return true
 	strcpy(resultArray, inputChar);
 	return true;
 }
 
-//test method, adds data to the array TODO: comment out when done!!
-int addTestData(TA array[])
+//test method, adds data to the array
+int addTestData(TA students[], INSTITUTE institutes[])
 {
 	//add nine TA's
 	for (int i = 0; i < 9; i++)
@@ -124,21 +135,29 @@ int addTestData(TA array[])
 
 		temp.studentNr = 123456 + (10 * i);				//studentnr.
 		strcpy(temp.name, "testStudent");				//name
-		temp.institute.number = i % 3;						//institutenr.
-		if(i % 3 == 0 )
-			strcpy(temp.institute.name, "institute 1");	//institute name
-		else if (i % 3 == 1)
-			strcpy(temp.institute.name, "institute 2");
-		else if (i % 3 == 2)
-			strcpy(temp.institute.name, "institute 3");
+		temp.institute = institutes[i % 3];				//assign an institute
 		temp.workHours = 100 - (i * 2);					//work Hours
 		temp.sickLeave = 5 + i;							//sick Leave
 		temp.taCourse = i % 2;							//TA Course
 
-		array[i] = temp; //add the new TA to the array
+		students[i] = temp; //add the new TA to the array
 	}	
 	//return 9, to be used as the counter
 	return 9;
+}
+
+//print funktion, recieves an array of TA's, and number of students to print.
+void printDataInList(TA students[], int listSize)
+{
+	//prints the headder for the data
+	printf("%-8s%-15s%-18s%-35s%-11s%-11s%-11s%-11s\n", "Index", "Studentnumber", "Name", "Institute", "Inst. Nr", "WorkHours", "SickLeave", "TA_Course");
+	printf("---------------------------------------------------------------------------------\n");
+	for (int i = 0; i < listSize; i++)
+	{
+		//prints each TA in list form, with all data
+		printf("%-8d%-15d%-18s%-35s%-11d%-11d%-11d%-11d\n", i, students[i].studentNr, students[i].name, students[i].institute.name, students[i].institute.number,
+			students[i].workHours, students[i].sickLeave, students[i].taCourse);
+	}
 }
 
 void worstBestTA(TA array[], int counter)
@@ -213,7 +232,7 @@ void worstBestTA(TA array[], int counter)
 
 //given institute nr or name, prints all attached TA's for that institute and a total billable hours.
 //TODO: make this work by name aswell
-void printInstituteData(TA array[], int counter)
+void printInstituteData(TA students[], int counter)
 {
 	//manually allocate a new array, limit by counter so we can store ALL the TA's if needed
 	TA *toPrint;
@@ -232,17 +251,17 @@ void printInstituteData(TA array[], int counter)
 	system("cls");
 	printf(">>select institute\n<<");
 	char inputChar[MAX_INPUT_LENGTH];
-	getUserInput(inputChar, MAX_INPUT_LENGTH, INTEGER);
+	getUserInput(inputChar, INTEGER);
 	int i = 0;
 	sscanf(inputChar, "%d", &i);
 
 	//loop all students, check if they belong to the selected institute, and add to sum. 
 	for (int j = 0; j < counter; j++)
 	{
-		if (array[j].institute.number == i)
+		if (students[j].institute.number == i)
 		{
-			sumTimer = sumTimer + array[j].workHours - array[j].sickLeave;
-			toPrint[toPrintCounter] = array[j];
+			sumTimer = sumTimer + students[j].workHours - students[j].sickLeave;
+			toPrint[toPrintCounter] = students[j];
 			toPrintCounter++;
 		}
 	}
@@ -256,28 +275,28 @@ void printInstituteData(TA array[], int counter)
 }
 
 //prints all data in the main data array
-void printAllData(TA array[], int counter)
+void printAllData(TA students[], int counter)
 {
 	//as printDataInList prints all the TA's we give it, all we need to do is give it all the data. 
-	printDataInList(array, counter);
+	printDataInList(students, counter);
 }
 
 //asks for input for a single student, then prints that students info
-void printSingleTA(TA array[])
+void printSingleTA(TA students[])
 {
 	//ask the user to select a student 
 	//TODO: make this work with studentnr, and maybe name.
 	system("cls");
 	printf(">>select student<<\n");
 	char inputChar[MAX_INPUT_LENGTH];
-	getUserInput(inputChar, MAX_INPUT_LENGTH, STUDENTNR);
+	getUserInput(inputChar, STUDENTNR);
 	int i = 0;
 	sscanf(inputChar, "%d", &i);
 
 	//create array for the single student, no malloc here as we know at
 	//compile-time how long an array for one student should be
 	TA singleStudent[1];
-	singleStudent[0] = array[i];
+	singleStudent[0] = students[i];
 
 	//prinst data for the selected student
 	printDataInList(singleStudent, 1);
@@ -285,7 +304,7 @@ void printSingleTA(TA array[])
 }
 
 //add a single student to the data array.
-void addTA(TA array[], int counter)
+void addTA(TA students[], int counter)
 {
 	//helper array, lets me print in a loop TODO: Extend, automated input of institute name
 	system("cls");
@@ -300,7 +319,7 @@ void addTA(TA array[], int counter)
 		if (i = 0)
 		{
 			printf("Input Name :");
-			if (getUserInput(inputChar, MAX_INPUT_LENGTH, STRING)) //correct input
+			if (getUserInput(inputChar, STRING)) //correct input
 			{
 				strcpy(temp.name, inputChar);
 			}
@@ -314,7 +333,7 @@ void addTA(TA array[], int counter)
 		else if (i = 1)
 		{
 			printf("Input Student Nr :");
-			if (getUserInput(inputChar, MAX_INPUT_LENGTH, STUDENTNR)) //correct input
+			if (getUserInput(inputChar, STUDENTNR)) //correct input
 			{
 				//casts input to integer, and store in the data array
 				sscanf(inputChar, "%d", &temp.studentNr);
@@ -329,7 +348,7 @@ void addTA(TA array[], int counter)
 		else if (i = 2)
 		{
 			printf("Input Institute Nr :");
-			if (getUserInput(inputChar, MAX_INPUT_LENGTH, INTEGER)) //correct input
+			if (getUserInput(inputChar, INTEGER)) //correct input
 			{
 				//casts input to integer, and store in the data array
 				sscanf(inputChar, "%d", &temp.institute.number);
@@ -344,7 +363,7 @@ void addTA(TA array[], int counter)
 		else if (i = 3)
 		{
 			printf("Input Work Hours :");
-			if (getUserInput(inputChar, MAX_INPUT_LENGTH, INTEGER)) //correct input
+			if (getUserInput(inputChar, INTEGER)) //correct input
 			{
 
 			}
@@ -358,7 +377,7 @@ void addTA(TA array[], int counter)
 		else if (i = 4)
 		{
 			printf("Input Sick Leave :");
-			if (getUserInput(inputChar, MAX_INPUT_LENGTH, INTEGER)) //correct input
+			if (getUserInput(inputChar, INTEGER)) //correct input
 			{
 
 			}
@@ -372,7 +391,7 @@ void addTA(TA array[], int counter)
 		else if (i = 5)
 		{
 			printf("Input TA course 1=yes, 2 = no :");
-			if (getUserInput(inputChar, MAX_INPUT_LENGTH, INTEGER)) //correct input
+			if (getUserInput(inputChar, INTEGER)) //correct input
 			{
 
 			}
@@ -387,7 +406,7 @@ void addTA(TA array[], int counter)
 
 
 		//assign the inputted values to the array
-		array[counter] = temp;
+		students[counter] = temp;
 	}
 }
 
@@ -412,19 +431,7 @@ void enterContinue()
 	getchar();
 }
 
-//print funktion, recieves the data array + a list of the TA's to print.
-void printDataInList(TA array[], int listSize)
-{
-	//prints the headder for the data
-	printf("%-10s%-18s%-15s%-15s%-15s%-15s%-15s%-15s\n", "Index", "Studentnumber","Name", "Institute", "Inst. Nr", "Work Hours", "Sick Leave", "TA Course");
-	printf("---------------------------------------------------------------------------------\n");
-	for (int i = 0; i < listSize; i++)
-	{
-		//prints each TA in list form, with all data
-		printf("%-10d%-18d%-15s%-15s%-15d%-15d%-15d%-15d\n", i, array[i].studentNr, array[i].name, array[i].institute.name, array[i].institute.number,
-																array[i].workHours, array[i].sickLeave, array[i].taCourse);
-	}
-}
+
 
 void doubleArraySize(TA array[])
 {
@@ -436,9 +443,41 @@ void menu()
 {
 	bool isActive = true;
 	//data array full of "struct Student"
-	TA studentDataArray[4];
+	TA studentDataArray[10];
+	const INSTITUTE instituteList[] = {	{ .number = 1,  .name = "DTU Aqua"},
+										{ .number = 2,  .name = "DTU Bioengeneering" },
+										{ .number = 3,  .name = "DTU Biosustain" },
+										{ .number = 4,  .name = "Center for Oil and Gas - DTU" },
+										{ .number = 5,  .name = "DTU Chemical engineering" },
+										{ .number = 6,  .name = "DTU Chemistry" },
+										{ .number = 7,  .name = "DTU Civil Engineering" },
+										{ .number = 8,  .name = "DTU Compute" },
+										{ .number = 9,  .name = "DTU Diplom" },
+										{ .number = 10, .name = "DTU Electrical Engineering" },
+										{ .number = 11, .name = "DTU Energy" },
+										{ .number = 12, .name = "DTU Entepeneurship" },
+										{ .number = 13, .name = "DTU Environment" },
+										{ .number = 14, .name = "National Food Institute" },
+										{ .number = 15, .name = "DTU Fotonik" },
+										{ .number = 16, .name = "DTU Health Tech" },
+										{ .number = 17, .name = "DTU Learn for Life" },
+										{ .number = 18, .name = "DTU Management" },
+										{ .number = 19, .name = "DTU Mechanical Engineering" },
+										{ .number = 20, .name = "DTU Nanolab" },
+										{ .number = 21, .name = "DTU Nutech" },
+										{ .number = 22, .name = "DTU Physics" },
+										{ .number = 23, .name = "DTU Space" },
+										{ .number = 24, .name = "DTU Vet" },
+										{ .number = 25, .name = "DTU Wind Energy"}
+									  };
+
+	
 	//counts up what numer of students we have added.
 	int counter = 0;
+
+	//TODO: Delete This
+	//adds test data, and sets the counter for number of studenst added
+	counter = addTestData(studentDataArray, instituteList);
 
 	//shows the menu first time
 	showMenuText();
@@ -449,7 +488,7 @@ void menu()
 
 		//gets exactly 255 characters from the input "stdin", saves the last space in the aray for newline.
 		char inputChar[MAX_INPUT_LENGTH];
-		getUserInput(inputChar, MAX_INPUT_LENGTH, INTEGER);
+		getUserInput(inputChar, STRING);
 
 		showMenuText();
 		printf("\n");
