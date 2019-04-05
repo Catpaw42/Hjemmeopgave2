@@ -25,6 +25,16 @@ s184750
 #include <ctype.h>
 
 
+//as we need a non standard function we have to check what OS we're working on
+//if _WIN32, then the code is running on windows, if it's not we use the unix syntaxt instead
+#ifdef _WIN32
+	#include <Windows.h>
+	#else
+	#include <unistd.h>
+#endif // _WIN32
+
+
+
 #define MAX_INPUT_LENGTH 256
 
 
@@ -49,9 +59,21 @@ typedef struct Student
 //used to clearly show what data we're receiving from the user
 typedef enum inputType 
 {
-	INTEGER, STRING, STUDENTNR, INSTITUTENR
+	INTEGER, STRING, STUDENTNR, INSTITUTENR, BOOL_0_1
 
 } inputType;
+
+//wait for the specified time, primarily to show error messages for a few seconds
+//takes a number of miliseconds to wait
+void napTime(int time)
+{
+#ifdef _WIN32
+	Sleep(time); //sleep for x miliseconds
+#else
+	usleep(time * 1000);  //usleep is in microseconds to we hav to multiply by 1000
+#endif // _WIN32
+
+}
 
 
 //custon input function, to validate user input.
@@ -66,7 +88,7 @@ bool getUserInput(char resultArray[], inputType x)
 	//generic error check, fgets returns a NULL pointer on error so if fgets does'nt validate we have a problem
 	if (!fgets(inputChar, sizeof inputChar, stdin))
 	{
-		printf("Read error, feel free to panic");
+		fprintf(stderr, "Read error, feel free to panic");
 		exit(-1);
 	}
 	//check if we have an end of file char, if not, then the user input is to long for the buffer.
@@ -74,14 +96,15 @@ bool getUserInput(char resultArray[], inputType x)
 	{
 		//empty the rest of the buffer
 		while (fgets(inputChar, sizeof inputChar, stdin));
-		printf("Error input is to long,  (input > %d)", MAX_INPUT_LENGTH);
+		fprintf(stderr, "Error input is to long,  (input > %d)", MAX_INPUT_LENGTH);
+		napTime(1000); //sleep for 1 seconds
 		//return 0 as the input is not valid
 		return false;
 	}
 
 
 	//check if the string is an integer
-	if (x == INTEGER || x== STUDENTNR || x == INSTITUTENR)
+	if (x == INTEGER || x== STUDENTNR || x == INSTITUTENR  || x == BOOL_0_1)
 	{
 		//pointer (char) used to hold the next value after a sucessfull conversion
 		char *check;
@@ -91,7 +114,8 @@ bool getUserInput(char resultArray[], inputType x)
 		//check the value of the check variable, if it's a whitespace or a 0, then we sucesfully converted the entire string.
 		if (!(isspace(*check) || *check == 0))
 		{
-			printf("Error input is not an integer");
+			fprintf(stderr, "Error input is not an integer");
+			napTime(1000); //sleep for 1 seconds
 			return false;
 		}
 			
@@ -103,7 +127,8 @@ bool getUserInput(char resultArray[], inputType x)
 		int temp = (int)strtol(inputChar, NULL, 10);
 		if (temp < 100000 || temp > 999999)
 		{
-			printf("Error Student nr is to long");
+			fprintf(stderr, "Error input must be six digits in the format : XXXXXX");
+			napTime(1000); //sleep for 1 seconds
 			return false;
 		}
 	}
@@ -114,7 +139,20 @@ bool getUserInput(char resultArray[], inputType x)
 		int temp = (int)strtol(inputChar, NULL, 10);
 		if (temp < 1 || temp > 25)
 		{
-			printf("Error Student nr is to long");
+			fprintf(stderr, "Error please select a nr. between 1-25");
+			napTime(1000); //sleep for 1 seconds
+			return false;
+		}
+	}
+	//special case for boolean integers
+	if (x == BOOL_0_1)
+	{
+		//check between 0 and 1
+		int temp = (int)strtol(inputChar, NULL, 10);
+		if (temp < 0 || temp > 1)
+		{
+			fprintf(stderr, "Error please input 0 or 1");
+			napTime(1000); //sleep for 1 seconds
 			return false;
 		}
 	}
@@ -227,12 +265,10 @@ void worstBestTA(TA array[], int counter)
 	//free the malloc
 	free(bestTA);
 	free(worstTA);
-
 }
 
-//given institute nr or name, prints all attached TA's for that institute and a total billable hours.
-//TODO: make this work by name aswell
-void printInstituteData(TA students[], int counter)
+//given institute nr or, prints all attached TA's for that institute and a total billable hours.
+void printInstituteData(TA students[], INSTITUTE institutes[], int counter)
 {
 	//manually allocate a new array, limit by counter so we can store ALL the TA's if needed
 	TA *toPrint;
@@ -244,21 +280,29 @@ void printInstituteData(TA students[], int counter)
 	}
 	int toPrintCounter = 0;
 	int sumTimer = 0;
-
-
-	//TODO: print a list of the institutes here, by name.
-	//select institute
-	system("cls");
-	printf(">>select institute\n<<");
 	char inputChar[MAX_INPUT_LENGTH];
-	getUserInput(inputChar, INTEGER);
-	int i = 0;
-	sscanf(inputChar, "%d", &i);
+
+	//select institute, we do this in a do/while loop so we can continue asking till we have a valid input.
+	do
+	{
+		system("cls");
+		printf(">>select institute<<\n");
+		for (int i = 0; i < 25; i++) //instituteList is constant so we know its size
+		{
+			printf("%-8d %-35s\n", institutes[i].number, institutes[i].name);
+		}
+		printf(">");
+		
+	} while (!getUserInput(inputChar, INSTITUTENR));
+	
+	
+	int instNr = 0;
+	sscanf(inputChar, "%d", &instNr);
 
 	//loop all students, check if they belong to the selected institute, and add to sum. 
 	for (int j = 0; j < counter; j++)
 	{
-		if (students[j].institute.number == i)
+		if (students[j].institute.number == instNr)
 		{
 			sumTimer = sumTimer + students[j].workHours - students[j].sickLeave;
 			toPrint[toPrintCounter] = students[j];
@@ -304,110 +348,118 @@ void printSingleTA(TA students[])
 }
 
 //add a single student to the data array.
-void addTA(TA students[], int counter)
+void addTA(TA students[], int counter, INSTITUTE institutes[])
 {
-	//helper array, lets me print in a loop TODO: Extend, automated input of institute name
-	system("cls");
-	printf("\n********************************************************\n");
-	printf("**Add new TA**\n\n");
 
 	TA temp; //temporary TA to store input data
 
-	for (int i = 0; i < 7; i++)
+	//we take 6 different options, we dont ask for institutename as that is definde by inst. number
+	int i = 0;
+	while (i < 6) //loop all 6 options, not using for-loop as this is a conditional increment
 	{
 		char inputChar[256];
-		if (i = 0)
+		if (i == 0)
 		{
-			printf("Input Name :");
+			system("cls");
+			printf("\n********************************************************\n");
+			printf("**Add new TA**\n\n");
+			printf("Input Name: ");
 			if (getUserInput(inputChar, STRING)) //correct input
 			{
-				strcpy(temp.name, inputChar);
-			}
-			else //invalid input
-			{
-				//reduce i by one, this forces the loop to ask for the same input again
-				i--;
-				printf("Invalid Input \n");
+				//remove trailing newline
+				char cleanedString[MAX_INPUT_LENGTH];
+				sscanf(inputChar, " %s", cleanedString);
+				//add to struct
+				strcpy(temp.name, cleanedString);
+				i++;
 			}
 		}
-		else if (i = 1)
+		else if (i == 1)
 		{
-			printf("Input Student Nr :");
+			system("cls");
+			printf("\n********************************************************\n");
+			printf("**Add new TA**\n\n");
+			printf("Input Name: %s\n", temp.name);
+			printf("Input Student Nr: ");
 			if (getUserInput(inputChar, STUDENTNR)) //correct input
 			{
 				//casts input to integer, and store in the data array
 				sscanf(inputChar, "%d", &temp.studentNr);
+				i++;
 			}
-			else //invalid input
+
+		}
+		else if (i == 2)
+		{
+			system("cls");
+			printf("\n********************************************************\n");
+			printf("**Add new TA**\n\n");
+			printf("Input Name: %s\n", temp.name);
+			printf("Input Student Nr: %d\n", temp.studentNr);
+			printf("Input Institute Nr: ");
+			if (getUserInput(inputChar, INSTITUTENR)) //correct input
 			{
-				//reduce i by one, this forces the loop to ask for the same input again
-				i--;
-				printf("Invalid Input, must be six digits the format: XXXXXX \n");
+				//casts input to integer, get the coresponding institute
+				int instNR = 0;
+				sscanf(inputChar, "%d", &instNR);
+				temp.institute = institutes[instNR - 1]; //adjust for arrayindexing
+				i++;
 			}
 		}
-		else if (i = 2)
+		else if (i == 3)
 		{
-			printf("Input Institute Nr :");
+			system("cls");
+			printf("\n********************************************************\n");
+			printf("**Add new TA**\n\n");
+			printf("Input Name: %s\n", temp.name);
+			printf("Input Student Nr: %d\n", temp.studentNr);
+			printf("Input Institute Nr: %d  - %s\n", temp.institute.number, temp.institute.name);
+			printf("Input Work Hours: ");
 			if (getUserInput(inputChar, INTEGER)) //correct input
 			{
-				//casts input to integer, and store in the data array
-				sscanf(inputChar, "%d", &temp.institute.number);
-			}
-			else //invalid input
-			{
-				//reduce i by one, this forces the loop to ask for the same input again
-				i--;
-				printf("Invalid Input, must be integer \n");
+				//casts input to integer, store in temp
+				sscanf(inputChar, "%d", &temp.workHours);
+				i++;
 			}
 		}
-		else if (i = 3)
+		else if (i == 4)
 		{
-			printf("Input Work Hours :");
+			system("cls");
+			printf("\n********************************************************\n");
+			printf("**Add new TA**\n\n");
+			printf("Input Name: %s\n", temp.name);
+			printf("Input Student Nr: %d\n", temp.studentNr);
+			printf("Input Institute Nr: %d  - %s\n", temp.institute.number, temp.institute.name);
+			printf("Input Work Hours: %d\n", temp.workHours);
+			printf("Input Sick Leave: ");
 			if (getUserInput(inputChar, INTEGER)) //correct input
 			{
-
-			}
-			else //invalid input
-			{
-				//reduce i by one, this forces the loop to ask for the same input again
-				i--;
-				printf("Invalid Input, must be integer \n");
+				//casts input to integer, store in temp
+				sscanf(inputChar, "%d", &temp.sickLeave);
+				i++;
 			}
 		}
-		else if (i = 4)
+		else if (i == 5)
 		{
-			printf("Input Sick Leave :");
-			if (getUserInput(inputChar, INTEGER)) //correct input
+			system("cls");
+			printf("\n********************************************************\n");
+			printf("**Add new TA**\n\n");
+			printf("Input Name: %s\n", temp.name);
+			printf("Input Student Nr: %d\n", temp.studentNr);
+			printf("Input Institute Nr: %d  - %s\n", temp.institute.number, temp.institute.name);
+			printf("Input Work Hours: %d\n", temp.workHours);
+			printf("Input Sick Leave: %d\n", temp.sickLeave);
+			printf("Input TA course 1 = yes, 0 = no: ");
+			if (getUserInput(inputChar, BOOL_0_1)) //correct input
 			{
-
-			}
-			else //invalid input
-			{
-				//reduce i by one, this forces the loop to ask for the same input again
-				i--;
-				printf("Invalid Input, must be integer \n");
-			}
-		}
-		else if (i = 5)
-		{
-			printf("Input TA course 1=yes, 2 = no :");
-			if (getUserInput(inputChar, INTEGER)) //correct input
-			{
-
-			}
-			else //invalid input
-			{
-				//reduce i by one, this forces the loop to ask for the same input again
-				i--;
-				printf("Invalid Input, must be integer \n");
+				//casts input to integer, store in temp
+				sscanf(inputChar, "%d", &temp.taCourse);
+				i++;
 			}
 		}
-		
-
-
-		//assign the inputted values to the array
-		students[counter] = temp;
 	}
+	//assign the input to the array
+	students[counter] = temp;
 }
 
 void showMenuText()
@@ -498,15 +550,15 @@ void menu()
 		if (inputChar[0] == '1')
 		{
 			//call the funktion with the arraypointer and the counter
-			addTA(&studentDataArray, counter);
+			addTA(&studentDataArray, counter, instituteList);
 
 
 			//output the result to user
 			system("cls");
 			printf("added new TA:\n");
-			printf("student name : %d \n", studentDataArray[counter].name);
+			printf("student name : %s \n", studentDataArray[counter].name);
 			printf("studentnumber: %d \n", studentDataArray[counter].studentNr);
-			printf("institute    : %d \n", studentDataArray[counter].institute.name);
+			printf("institute    : %s \n", studentDataArray[counter].institute.name);
 			printf("institute nr : %d \n", studentDataArray[counter].institute.number);
 			printf("work hours   : %d \n", studentDataArray[counter].workHours);
 			printf("sick leave   : %d \n", studentDataArray[counter].sickLeave);
@@ -539,7 +591,7 @@ void menu()
 		}
 		else if (inputChar[0] == '4')
 		{
-			printInstituteData(studentDataArray, counter);
+			printInstituteData(studentDataArray, instituteList, counter);
 			//break the flow to alow the user to see the data added
 			enterContinue();
 			//show the menu again
