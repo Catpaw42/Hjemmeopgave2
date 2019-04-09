@@ -26,10 +26,10 @@ s184750
 
 
 //as we need a non standard function we have to check what OS we're working on
-//if _WIN32, then the code is running on windows, if it's not we use the unix syntaxt instead
+//if _WIN32 exists, then the code is running on windows, if it's not we use the unix syntaxt instead
 #ifdef _WIN32
 	#include <Windows.h>
-	#else
+#else
 	#include <unistd.h>
 #endif // _WIN32
 
@@ -67,9 +67,9 @@ typedef enum inputType
 //takes a number of miliseconds to wait
 void napTime(int time)
 {
-#ifdef _WIN32
+#ifdef _WIN32 //if we're on a windows mashine
 	Sleep(time); //sleep for x miliseconds
-#else
+#else	
 	usleep(time * 1000);  //usleep is in microseconds to we hav to multiply by 1000
 #endif // _WIN32
 
@@ -193,7 +193,7 @@ void printDataInList(TA students[], int listSize)
 	for (int i = 0; i < listSize; i++)
 	{
 		//prints each TA in list form, with all data
-		printf("%-8d%-15d%-18s%-35s%-11d%-11d%-11d%-11d\n", i, students[i].studentNr, students[i].name, students[i].institute.name, students[i].institute.number,
+		printf("%-8d%-15d%-18s%-35s%-11d%-11d%-11d%-11d\n", (i+1), students[i].studentNr, students[i].name, students[i].institute.name, students[i].institute.number,
 			students[i].workHours, students[i].sickLeave, students[i].taCourse);
 	}
 }
@@ -326,25 +326,43 @@ void printAllData(TA students[], int counter)
 }
 
 //asks for input for a single student, then prints that students info
-void printSingleTA(TA students[])
+void printSingleTA(TA students[], int counter)
 {
-	//ask the user to select a student 
-	//TODO: make this work with studentnr, and maybe name.
-	system("cls");
-	printf(">>select student<<\n");
+	//ask the user to select a student
 	char inputChar[MAX_INPUT_LENGTH];
-	getUserInput(inputChar, STUDENTNR);
-	int i = 0;
-	sscanf(inputChar, "%d", &i);
+	do
+	{
+		system("cls");
+		printf(">>select student by Student nr.<<\n");
+		printf(">");
+
+	} while (!getUserInput(inputChar, STUDENTNR));
+	int inputStudentNr = 0;
+	sscanf(inputChar, "%d", &inputStudentNr);
+
 
 	//create array for the single student, no malloc here as we know at
 	//compile-time how long an array for one student should be
 	TA singleStudent[1];
-	singleStudent[0] = students[i];
-
-	//prinst data for the selected student
-	printDataInList(singleStudent, 1);
-
+	bool studentFound = false;
+	//find that student in the array
+	for (int i = 0; i < counter; i++)
+	{
+		if (students[i].studentNr == inputStudentNr)
+		{
+			singleStudent[0] = students[i];
+			studentFound = true;
+		}
+			
+	}
+	//check if we found something
+	if (!studentFound)
+		printf("Studentnr: %d, not found in database\n", inputStudentNr);
+	else
+	{
+		//prinst data for the selected student
+		printDataInList(singleStudent, 1);
+	}
 }
 
 //add a single student to the data array.
@@ -484,18 +502,42 @@ void enterContinue()
 }
 
 
-
-void doubleArraySize(TA array[])
+//if we hit the limit of the array, we extend it.
+//should be called with the address(&) of the array, and the current length
+int doubleArraySize(TA **students, int length)
 {
-
+	//double the length value
+	int newLength = length * 2;
+	//reallocate to the new array size
+	*students = realloc(*students, newLength * sizeof(TA));
+	if (students == NULL) //check if the realloc was sucessfull
+	{
+		printf("Error!! Realloc of studentDataArray failed.");
+		exit(1);
+	}
+	//return the new length of the array.
+	printf("sucesfully increased size to: %d", newLength);
+	return newLength;
 }
 
 //main menu
 void menu()
 {
 	bool isActive = true;
-	//data array full of "struct Student"
-	TA studentDataArray[10];
+
+	//manually allocate an array for TA's
+	int studentDataArrayLength = 10;
+	TA *studentDataArray;
+
+	studentDataArray = malloc(studentDataArrayLength * sizeof(TA));
+	if (studentDataArray == NULL)
+	{
+		printf("Error!! Malloc of studentDataArray failed.");
+		exit(1);
+	}
+
+
+	//list of Institutes
 	const INSTITUTE instituteList[] = {	{ .number = 1,  .name = "DTU Aqua"},
 										{ .number = 2,  .name = "DTU Bioengeneering" },
 										{ .number = 3,  .name = "DTU Biosustain" },
@@ -549,8 +591,13 @@ void menu()
 		//test if the input is one of the menu options
 		if (inputChar[0] == '1')
 		{
+
+			//check if the array still has room
+			if (studentDataArrayLength - counter <= 2) //only 2 spots left
+				studentDataArrayLength = doubleArraySize(&studentDataArray, studentDataArrayLength);
+
 			//call the funktion with the arraypointer and the counter
-			addTA(&studentDataArray, counter, instituteList);
+			addTA(studentDataArray, counter, instituteList);
 
 
 			//output the result to user
@@ -583,7 +630,7 @@ void menu()
 		}
 		else if (inputChar[0] == '3')
 		{
-			printSingleTA(studentDataArray);
+			printSingleTA(studentDataArray, counter);
 			//break the flow to alow the user to see the data added
 			enterContinue();
 			//show the menu again
@@ -610,6 +657,8 @@ void menu()
 		else
 			printf(">>invalid input<<\n");
 	}
+
+	free(studentDataArray);
 }
 
 int main()
