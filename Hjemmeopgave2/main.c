@@ -160,6 +160,36 @@ bool getUserInput(char resultArray[], inputType x)
 	return true;
 }
 
+
+void printTotalSickLeave(TA students[], int counter)
+{
+	//loop all students
+
+	//summ all work hours 
+
+	//summ all sick leave
+
+	//calculate percentage
+
+	//print to screen
+}
+
+void PrintMissingTACourse(TA students[], int counter)
+{
+	//loop all students
+
+	//count all TA course = 1
+
+	//calculate percentage of all students
+
+	//print to screen
+}
+
+void printAllInstituteData(TA students[], int counter)
+{
+
+}
+
 //test method, adds data to the array
 int addTestData(TA students[], INSTITUTE institutes[])
 {
