@@ -19,12 +19,12 @@ s184750
 //include limits constants
 #include <limits.h>
 
-//contains functions i use to verify user input
+//contains functions used to verify user input
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 
-
+//used to do the sleep timer that shows error messages
 //as we need a non standard function we have to check what OS we're working on
 //if _WIN32 exists, then the code is running on windows, if it's not we use the unix syntaxt instead
 #ifdef _WIN32
@@ -33,10 +33,7 @@ s184750
 	#include <unistd.h>
 #endif // _WIN32
 
-
-
 #define MAX_INPUT_LENGTH 256
-
 
 //Structure to represent the institutes
 typedef struct Institute
@@ -352,8 +349,7 @@ void printSingleTA(TA students[], int counter)
 		{
 			singleStudent[0] = students[i];
 			studentFound = true;
-		}
-			
+		}		
 	}
 	//check if we found something
 	if (!studentFound)
@@ -536,7 +532,6 @@ void menu()
 		exit(1);
 	}
 
-
 	//list of Institutes
 	const INSTITUTE instituteList[] = {	{ .number = 1,  .name = "DTU Aqua"},
 										{ .number = 2,  .name = "DTU Bioengeneering" },
@@ -573,18 +568,16 @@ void menu()
 	//adds test data, and sets the counter for number of studenst added
 	counter = addTestData(studentDataArray, instituteList);
 
-	//shows the menu first time
-	showMenuText();
-
 	//main loop, repeatedly shows the menu and listens for input
 	while (isActive)
 	{
+		showMenuText();
 
 		//gets exactly 255 characters from the input "stdin", saves the last space in the aray for newline.
 		char inputChar[MAX_INPUT_LENGTH];
 		getUserInput(inputChar, STRING);
 
-		showMenuText();
+		
 		printf("\n");
 
 
@@ -655,7 +648,10 @@ void menu()
 		else if (inputChar[0] == 'x')
 			isActive = false;
 		else
+		{
 			printf(">>invalid input<<\n");
+			napTime(500);
+		}	
 	}
 
 	free(studentDataArray);
