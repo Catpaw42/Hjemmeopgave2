@@ -6,9 +6,6 @@ Gruppe 32
 
 Magnus Brandt Sløgedal
 s103185
-
-Mathias Nyberg Lundahl
-s184750
 */
 
 
@@ -35,12 +32,14 @@ s184750
 
 #define MAX_INPUT_LENGTH 256
 
+#define TEST_ //TODO: Remove this to remove test data
+
 //Structure to represent the institutes
 typedef struct Institute
 {
 	char name[MAX_INPUT_LENGTH];
 	int number;
-}INSTITUTE;
+} INSTITUTE;
 
 //define struct TA, this is a datastucture that holds all data about a single TA.
 typedef struct Student
@@ -72,7 +71,6 @@ void napTime(int time)
 
 }
 
-
 //custon input function, to validate user input.
 //takes an array to store the return data in, and the type of data to validate for.
 //returns FALSE if input fails to validate, and TRUE if it does.
@@ -98,7 +96,6 @@ bool getUserInput(char resultArray[], inputType x)
 		//return 0 as the input is not valid
 		return false;
 	}
-
 
 	//check if the string is an integer
 	if (x == INTEGER || x== STUDENTNR || x == INSTITUTENR  || x == BOOL_0_1)
@@ -163,34 +160,62 @@ bool getUserInput(char resultArray[], inputType x)
 
 void printTotalSickLeave(TA students[], int counter)
 {
+	double work = 0;
+	double sick = 0;
+
 	//loop all students
-
-	//summ all work hours 
-
-	//summ all sick leave
-
+	for (int i = 0; i < counter; i++)
+	{
+		//summ both work and sickLeave
+		work = work + students[i].workHours;
+		sick = sick + students[i].sickLeave;
+	}
 	//calculate percentage
+	double leavePercentage = (sick / work) * 100;
 
 	//print to screen
+	printf("Total Sick Leave is at:   %5.2f%%\n", leavePercentage);
 }
 
 void PrintMissingTACourse(TA students[], int counter)
 {
-	//loop all students
+	int completedTA = 0;
+	//loop all students, as TA course = 1 for completed course we can simply sum them all up
+	for (int i = 0; i < counter; i++)
+		completedTA = completedTA + students[i].taCourse;
 
-	//count all TA course = 1
+	//claculate missing
+	double missingTA = counter - completedTA;
 
 	//calculate percentage of all students
+	double percentage = (missingTA / (double)counter) * 100;
 
 	//print to screen
+	printf("A total of %5.2f%% students have not completed the TA Course\n", percentage);
 }
 
-void printAllInstituteData(TA students[], int counter)
+void printAllInstituteData(TA students[], int counter, INSTITUTE institutes[])
 {
+	//create an int array = 25 institutes
+	int data[25] = { 0 };
+	//loop all students
+	for (int i = 0; i < counter; i++)
+	{
+		//for each institute sum work hours and add to the array
+		data[students[i].institute.number-1] += (students[i].workHours - students[i].sickLeave);
+	}
 
+	//print to screen
+	printf("%-10s %-35s %-10s\n", "Inst. NR","Inst. Navn","total TA timer");
+	printf("------------------------------------------------------------\n");
+
+	for (int i = 0; i < 25; i++)
+	{
+		printf("%-10d %-35s %-10d\n", institutes[i].number, institutes[i].name, data[i]);
+	}
 }
-
-//test method, adds data to the array
+#ifdef TEST_
+// test method, adds data to the array
 int addTestData(TA students[], INSTITUTE institutes[])
 {
 	//add nine TA's
@@ -206,10 +231,11 @@ int addTestData(TA students[], INSTITUTE institutes[])
 		temp.taCourse = i % 2;							//TA Course
 
 		students[i] = temp; //add the new TA to the array
-	}	
+	}
 	//return 9, to be used as the counter
 	return 9;
 }
+#endif // TEST_
 
 //print funktion, recieves an array of TA's, and number of students to print.
 void printDataInList(TA students[], int listSize)
@@ -294,7 +320,7 @@ void worstBestTA(TA array[], int counter)
 	free(worstTA);
 }
 
-//given institute nr or, prints all attached TA's for that institute and a total billable hours.
+//given institute nr, prints all attached TA's for that institute and a total billable hours.
 void printInstituteData(TA students[], INSTITUTE institutes[], int counter)
 {
 	//manually allocate a new array, limit by counter so we can store ALL the TA's if needed
@@ -322,7 +348,6 @@ void printInstituteData(TA students[], INSTITUTE institutes[], int counter)
 		
 	} while (!getUserInput(inputChar, INSTITUTENR));
 	
-	
 	int instNr = 0;
 	sscanf(inputChar, "%d", &instNr);
 
@@ -337,7 +362,7 @@ void printInstituteData(TA students[], INSTITUTE institutes[], int counter)
 		}
 	}
 	printf("\n");
-	printf("Total TA Hours: %d \n", sumTimer);
+	printf("Total TA Hours for: %d %s is: %d \n",institutes[instNr-1].number, institutes[instNr-1].name, sumTimer);
 
 	printDataInList(toPrint, toPrintCounter);
 
@@ -516,6 +541,9 @@ void showMenuText()
 	printf(":: 3 ::    Print single student\n");
 	printf(":: 4 ::    Print institue data\n");
 	printf(":: 5 ::    Print best and worst TA\n");
+	printf(":: 6 ::    Print Total Leave percentage\n");
+	printf(":: 7 ::    Print percentage missing TA course\n");
+	printf(":: 8 ::    Print All TA Hours for all Institutes\n");
 	printf(":: x ::    Exit\n");
 }
 
@@ -594,9 +622,10 @@ void menu()
 	//counts up what numer of students we have added.
 	int counter = 0;
 
-	//TODO: Delete This
+#ifdef TEST_
 	//adds test data, and sets the counter for number of studenst added
 	counter = addTestData(studentDataArray, instituteList);
+#endif // TEST_
 
 	//main loop, repeatedly shows the menu and listens for input
 	while (isActive)
@@ -606,10 +635,7 @@ void menu()
 		//gets exactly 255 characters from the input "stdin", saves the last space in the aray for newline.
 		char inputChar[MAX_INPUT_LENGTH];
 		getUserInput(inputChar, STRING);
-
-		
 		printf("\n");
-
 
 		//test if the input is one of the menu options
 		if (inputChar[0] == '1')
@@ -634,13 +660,11 @@ void menu()
 			printf("sick leave   : %d \n", studentDataArray[counter].sickLeave);
 			printf("TA course    : %d \n", studentDataArray[counter].taCourse);
 
+			//remember to increment counter as we have now added to the array
+			counter++;
 
 			//break the flow to alow the user to see the data added
 			enterContinue();
-			//show the menu again
-			showMenuText();
-			//remember to increment counter as we have now added to the array
-			counter++;
 		}
 
 		else if (inputChar[0] == '2')
@@ -648,32 +672,42 @@ void menu()
 			printAllData(studentDataArray, counter);
 			//break the flow to alow the user to see the data added
 			enterContinue();
-			//show the menu again
-			showMenuText();
 		}
 		else if (inputChar[0] == '3')
 		{
 			printSingleTA(studentDataArray, counter);
 			//break the flow to alow the user to see the data added
 			enterContinue();
-			//show the menu again
-			showMenuText();
 		}
 		else if (inputChar[0] == '4')
 		{
 			printInstituteData(studentDataArray, instituteList, counter);
 			//break the flow to alow the user to see the data added
 			enterContinue();
-			//show the menu again
-			showMenuText();
 		}
 		else if (inputChar[0] == '5')
 		{
 			worstBestTA(studentDataArray, counter);
 			//break the flow to alow the user to see the data added
 			enterContinue();
-			//show the menu again
-			showMenuText();
+		}
+		else if (inputChar[0] == '6')
+		{
+			printTotalSickLeave(studentDataArray, counter);
+			//break the flow to alow the user to see the data added
+			enterContinue();
+		}
+		else if (inputChar[0] == '7')
+		{
+			PrintMissingTACourse(studentDataArray, counter);
+			//break the flow to alow the user to see the data added
+			enterContinue();
+		}
+		else if (inputChar[0] == '8')
+		{
+			printAllInstituteData(studentDataArray, counter, instituteList);
+			//break the flow to alow the user to see the data added
+			enterContinue();
 		}
 		else if (inputChar[0] == 'x')
 			isActive = false;
@@ -683,7 +717,7 @@ void menu()
 			napTime(500);
 		}	
 	}
-
+	//free the malloc
 	free(studentDataArray);
 }
 
