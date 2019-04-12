@@ -32,7 +32,7 @@ s103185
 
 #define MAX_INPUT_LENGTH 256
 
-#define TEST_ //TODO: Remove this to remove test data
+//#define TEST_   //TODO: Remove this to remove test data
 
 //Structure to represent the institutes
 typedef struct Institute
